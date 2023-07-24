@@ -1,0 +1,64 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: da93f4ba0bcf79984b84222d0ea0da4a939581e9d5745bed0826c622fef5720b
+
+name:           lua-interpreter
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/lua-interpreter#readme>
+homepage:       https://github.com/githubuser/lua-interpreter#readme
+bug-reports:    https://github.com/githubuser/lua-interpreter/issues
+author:         Cui Shengping
+maintainer:     scui10@illinois.edu
+copyright:      2023 Cui Shengping
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/lua-interpreter
+
+library
+  other-modules:
+      Lua.Core , Lua.Eval , Lua.Parse , Lua.Runtime 
+  hs-source-dirs:
+      app
+  build-depends:
+      base >=4.7 && <5
+    , base , unordered-containers >= 0.2 , parsec , mtl, hashable
+  default-language: Haskell2010
+  default-extensions: FlexibleContexts, DeriveGeneric
+
+executable main
+  main-is: Main.hs
+  other-modules:
+      Lua.Core , Lua.Eval , Lua.Parse , Lua.Runtime  
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , base , unordered-containers >= 0.2 , parsec , mtl, hashable
+  default-language: Haskell2010
+  default-extensions: FlexibleContexts, DeriveGeneric
+
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      PropertyTests, UnitTests, Lua.Core, Lua.Eval, Lua.Runtime, Lua.Parse
+  hs-source-dirs:
+      test, app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , base , unordered-containers >= 0.2 , parsec , mtl, hashable, QuickCheck, tasty, tasty-quickcheck, tasty-hunit
+  default-language: Haskell2010
+  default-extensions: FlexibleContexts, DeriveGeneric
