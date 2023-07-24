@@ -201,11 +201,12 @@ setMetaStmt = do symbol "setmetatable"
 
 stmt :: Parser Stmt
 stmt =  try quitStmt 
+    <|> seqStmt
     <|> try printStmt
     <|> try tableAssignStmt 
     <|> try assignStmt
     <|> try retStmt
-    <|> try funcStmt
-    <|> seqStmt 
+    <|> funcStmt
+
 
 -- TODO: direct expression evaluation

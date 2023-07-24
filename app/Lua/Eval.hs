@@ -70,7 +70,6 @@ eval (FuncCallExp func args) =
 
 -- eval e = return $ StrVal ("unrecognized expression" ++ (show e))
 
--- TODO: function call
 apply :: Val -> [Exp] -> EvalState Val
 apply (FuncVal params body clenv) args = do
     env <- get
@@ -117,9 +116,9 @@ exec (TableAssignStmt e1@(VarExp tableName) e2 e3) = do
                                   modify $ H.insert tableName (TableVal newTable)
                                   return $ StrVal ""
         _                   -> return $ StrVal "attempting to index a value that's not a table."
-                                
+
 exec (SeqStmt xs) = do outputs <- mapM exec xs
-                       return $ StrVal (unlines $ map show outputs)
+                       return $ last outputs
 
 exec (FuncStmt fname params body) = do
   env <- get
@@ -127,6 +126,6 @@ exec (FuncStmt fname params body) = do
   modify $ H.insert fname val
   return $ StrVal ""
 
--- TODO: meta method call
+-- TODO: meta methods
 
 exec s = return  $ StrVal ("invalid statement" ++ (show s))
