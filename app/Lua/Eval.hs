@@ -5,7 +5,7 @@ import Lua.Core
 import Lua.Runtime
 
 import Prelude hiding (lookup)
-import qualified Data.HashMap.Strict as H (HashMap, insert, lookup, empty, fromList, union)
+import qualified Data.HashMap.Strict as H (HashMap, insert, lookup, empty, fromList, union, delete)
 import Control.Monad.State
 import Control.Monad.Except
 
@@ -94,6 +94,9 @@ myZip varList valList = aux varList valList []
 
 
 exec :: Stmt -> EvalState Val
+
+exec NullStmt = return NilVal
+
 exec (PrintStmt e) = do v <- eval e 
                         return $ StrVal (show v)
 
@@ -105,7 +108,7 @@ exec (AssignStmt keyExpList valExpList) = do
      valList <- mapM eval valExpList 
      let f = (\((VarExp s),v) ->  modify $ H.insert s v)
      mapM f $ myZip keyExpList valList 
-     return $ StrVal ""
+     return $ NilVal
 
 exec (TableAssignStmt e1@(VarExp tableName) e2 e3) = do 
       oldTableVal <- eval e1 
@@ -114,7 +117,7 @@ exec (TableAssignStmt e1@(VarExp tableName) e2 e3) = do
                                   newVal   <- eval e3 
                                   let newTable = H.insert keyVal newVal oldTable
                                   modify $ H.insert tableName (TableVal newTable)
-                                  return $ StrVal ""
+                                  return $ NilVal
         _                   -> return $ StrVal "attempting to index a value that's not a table."
 
 exec (SeqStmt xs) = do outputs <- mapM exec xs
@@ -124,8 +127,66 @@ exec (FuncStmt fname params body) = do
   env <- get
   val <- (\argVal -> FuncVal argVal body env) <$> mapM getName params
   modify $ H.insert fname val
-  return $ StrVal ""
+  return $ NilVal
+
+exec (IfStmt exp s1 s2) = do
+  cond <- eval exp
+  case cond of
+    (BoolVal b) | b == True -> do val <- exec s1
+                                  return val
+    (BoolVal b) -> do val <- exec s2
+                      return val
+    (IntVal i) | i == 0 -> do val <- exec s2
+                              return val
+    (IntVal i) -> do val <- exec s1
+                     return val
+    _ -> return $ StrVal "IF condition could not evaluate to boolean value"
+
+exec BreakStmt = return $ ControlVal "break"
+
+exec (ForStmt fvar start end step body) = do
+  startVal <- eval start
+  endVal <- eval end
+  stepVal <- eval step
+  case (startVal, endVal, stepVal) of
+    (IntVal i1, IntVal i2, IntVal 0) -> return $ StrVal "FOR step expression evaluates to zero"
+    (IntVal i1, IntVal i2, IntVal i3) -> do modify $ H.insert fvar startVal
+                                            val <- loopExec fvar endVal stepVal body ""
+                                            modify $ H.delete fvar  -- control variable would not be accessible outside loop
+                                            return val
+    _ -> return $ StrVal "FOR control expression evaluates to none-numerical value"
+
+exec s = return  $ StrVal ("invalid statement" ++ (show s))
+
+loopExec :: String -> Val -> Val -> Stmt -> String -> EvalState Val
+loopExec var end step body outputs =
+  do
+    condVal <- loopCond var end step
+    case condVal of
+      (BoolVal False) -> return $ StrVal outputs
+      _ -> do val <- exec body
+              case val of
+                (ControlVal "break") -> return $ StrVal outputs
+                (StrVal s) -> do nval <- loopStep var step
+                                 loopExec var end step body (outputs ++ "\n" ++ s)
+                _ -> do nval <- loopStep var step
+                        loopExec var end step body outputs
+
+loopCond :: String -> Val -> Val -> EvalState Val
+loopCond var (IntVal end) step =
+   do curVal <- eval (VarExp var)
+      case (curVal, step) of
+        (IntVal cur, IntVal s) | s > 0 -> return $ BoolVal (cur < end)
+        (IntVal cur, IntVal s) -> return $ BoolVal (cur > end)
+        _ -> return $ BoolVal False
+
+loopStep :: String -> Val -> EvalState Val
+loopStep var (IntVal step) =
+  do curVal <- eval (VarExp var)
+     case curVal of
+       (IntVal cur) -> do modify $ H.insert var (IntVal (cur+step))
+                          return $ IntVal (cur+step)
+       _ -> return $ NilVal
 
 -- TODO: meta methods
 
-exec s = return  $ StrVal ("invalid statement" ++ (show s))

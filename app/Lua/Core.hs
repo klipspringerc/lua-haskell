@@ -15,9 +15,9 @@ import Data.Hashable
 type Env = H.HashMap String Val
 
 --- ### Values
--- primitive values of lua 
--- 5 of 8 basic types in Lua: nil, boolean, number, string, table.
---  omitted function, userdata, thread 
+-- supported basic types in Lua: nil, boolean, number, string, table, function.
+-- control value is introduced to pass execution flow control signals.
+-- omitted: userdata, thread
 
 -- Table
 -- key can contain values of all types (except nil). 
@@ -32,6 +32,7 @@ data Val = NilVal  -- cannot be used as table index
      | StrVal String   
      | TableVal Table  
      | FuncVal [String] Stmt Env  -- Closure
+     | ControlVal String  -- Control signals
     deriving (Typeable, Generic, Eq)
 
 instance Hashable Val
@@ -43,6 +44,7 @@ typeName IntVal{} = "Integer"
 typeName StrVal{} = "String"
 typeName TableVal{} = "Table"
 typeName FuncVal{} = "Func"
+typeName ControlVal{} = "Control"
 
 instance Show Val where
   show NilVal = "nil"
@@ -51,7 +53,7 @@ instance Show Val where
   show (IntVal i) = show i
   show (StrVal s) =  s
   show (FuncVal args _ _)  = "#<function:(" ++ unwords args ++ ") ...>"
-
+  show (ControlVal s) =  "#<control:(" ++ s ++ ")>"
 
 --- ### Expressions
 -- program expressions that can be evaluated to Val
@@ -78,8 +80,12 @@ data Stmt = AssignStmt [Exp] [Exp] -- variable assignment, support multiple assi
           | SeqStmt [Stmt] -- a sequence of statements to be executed 
           | ReturnStmt Exp
           | FuncStmt String [Exp] Stmt
+          | IfStmt Exp Stmt Stmt -- else/elseif would be recursively stored in the second Stmt
           | SetMetaStmt String String
-          | QuitStmt 
+          | ForStmt String Exp Exp Exp Stmt -- var name, start, end, step and body
+          | BreakStmt
+          | NullStmt
+          | QuitStmt
     deriving (Eq, Generic, Show)
 
 

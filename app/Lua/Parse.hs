@@ -23,7 +23,8 @@ type Parser = ParsecT String () Identity
 -- Lexicals 
 
 symbol :: String -> Parser String
-symbol s = do string s
+symbol s = do spaces
+              string s
               spaces
               return s
 
@@ -189,6 +190,65 @@ funcStmt = do symbol "function"
               symbol "end" -- TODO: return statement
               return $ FuncStmt fname paramList body
 
+ifStmt :: Parser Stmt
+ifStmt = do symbol "if"
+            exp <- expr
+            symbol "then"
+            s1 <- stmt
+            s2 <- ifCont
+            return $ IfStmt exp s1 s2
+
+ifEndStmt :: Parser Stmt
+ifEndStmt = symbol "end" >> return NullStmt
+
+ifElseStmt :: Parser Stmt
+ifElseStmt = do symbol "else"
+                s <- stmt
+                symbol "end"
+                return s
+
+-- Handle `elseif` as recursive IfStmt
+ifContStmt :: Parser Stmt
+ifContStmt = do symbol "elseif"
+                exp <- expr
+                symbol "then"
+                s1 <- stmt
+                s2 <- ifCont
+                return $ IfStmt exp s1 s2
+
+ifCont :: Parser Stmt
+ifCont = try ifEndStmt
+      <|> try ifContStmt
+      <|> ifElseStmt
+
+breakStmt :: Parser Stmt
+breakStmt = symbol "break" >> return BreakStmt
+
+forStmt :: Parser Stmt
+forStmt = do symbol "for"
+             fvar <- var
+             symbol "="
+             startExp <- expr
+             symbol ","
+             endExp <- expr
+             stepExp <- optForStep
+             symbol "do"
+             body <- stmt
+             symbol "end"
+             return $ ForStmt fvar startExp endExp stepExp body
+
+-- for loop step value is optional, defaults to 1
+forStepExp :: Parser Exp
+forStepExp = do symbol ","
+                exp <- expr
+                return exp
+
+defaultStepExp :: Parser Exp
+defaultStepExp = do spaces
+                    return (IntExp 1)
+
+optForStep :: Parser Exp
+optForStep = try forStepExp <|> defaultStepExp
 
 setMetaStmt :: Parser Stmt
 setMetaStmt = do symbol "setmetatable"
@@ -201,11 +261,14 @@ setMetaStmt = do symbol "setmetatable"
 
 stmt :: Parser Stmt
 stmt =  try quitStmt 
-    <|> seqStmt
+    <|> try seqStmt
     <|> try printStmt
+    <|> try retStmt
+    <|> try ifStmt
+    <|> try forStmt
+    <|> try breakStmt
     <|> try tableAssignStmt 
     <|> try assignStmt
-    <|> try retStmt
     <|> funcStmt
 
 

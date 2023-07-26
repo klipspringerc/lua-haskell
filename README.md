@@ -20,8 +20,22 @@ a[20] = "great"
 print(a[20])
 k = 20
 print(a[k])
+```
 
-do a=20;b=40;return a*b end
+## Sequence and Control Structure
+```lua
+do a=20;b=40;op="+" end
+
+if a > b then v=a else v=b end
+
+if op == "+" then r = a + b elseif op == "-" then r = a - b else r = -1 end
+
+for i=1,10 do print(i) end
+for i=10,1,-3 do print(i) end
+
+v=0
+for i=1,10,1 do v = v+i end
+print(v)
 ```
 
 ## Functions
