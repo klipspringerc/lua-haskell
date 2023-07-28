@@ -93,12 +93,27 @@ tableLookUpExp = do t <- var
                     symbol "]"
                     return $ TableLookUpExp (VarExp t) keyExp
 
+tableAltLookUpExp :: Parser Exp
+tableAltLookUpExp = do t <- var
+                       symbol "."
+                       key <- var
+                       return $ TableLookUpExp (VarExp t) (StrExp key)
+
 funcCallExp :: Parser Exp
 funcCallExp = do fname <- var
                  symbol "("
                  argList <- expr `sepBy` (symbol ",")
                  symbol ")"
                  return $ FuncCallExp (VarExp fname) argList
+
+methodCallExp :: Parser Exp
+methodCallExp = do tname <- var
+                   symbol ":"
+                   fname <- var
+                   symbol "("
+                   argList <- expr `sepBy` (symbol ",")
+                   symbol ")"
+                   return $ MethodCallExp (VarExp tname) fname argList
 
 expr :: Parser Exp
 expr = try (buildExpressionParser table atom)  <|> atom <?> "expression"
@@ -109,7 +124,9 @@ atom = try nilExp
    <|> try boolExp  
    <|> try strExp
    <|> try tableLookUpExp
+   <|> try tableAltLookUpExp
    <|> try tableConstructor
+   <|> try methodCallExp
    <|> try funcCallExp
    <|> try varExp
    <|> parens expr
@@ -178,7 +195,7 @@ retStmt = do symbol "return"
              valExp <- expr
              return $ ReturnStmt valExp
 
-funcStmt :: Parser Stmt 
+funcStmt :: Parser Stmt
 funcStmt = do symbol "function"
               fname <- var
               symbol "("
@@ -187,8 +204,23 @@ funcStmt = do symbol "function"
               spaces
               body <- stmt
               spaces
-              symbol "end" -- TODO: return statement
+              symbol "end"
               return $ FuncStmt fname paramList body
+
+methodStmt :: Parser Stmt
+methodStmt = do symbol "function"
+                tname <- var
+                symbol ":"
+                fname <- var
+                symbol "("
+                paramList <- varExp `sepBy` (symbol ",")
+                symbol ")"
+                spaces
+                body <- stmt
+                spaces
+                symbol "end"
+                let params = (VarExp "self"):paramList -- add self to parameter list
+                return $ MethodStmt tname (FuncStmt fname params body)
 
 ifStmt :: Parser Stmt
 ifStmt = do symbol "if"
@@ -269,6 +301,7 @@ stmt =  try quitStmt
     <|> try breakStmt
     <|> try tableAssignStmt 
     <|> try assignStmt
+    <|> try methodStmt
     <|> funcStmt
 
 

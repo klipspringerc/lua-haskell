@@ -68,6 +68,23 @@ eval (FuncCallExp func args) =
        FuncVal params body clenv -> apply (FuncVal params body clenv) args
        _ -> return $ StrVal ("function name not found: " ++ (show func))
 
+
+eval (MethodCallExp tableExp method args) =
+  do tableVal <- eval tableExp
+     case tableVal of
+       TableVal t ->
+           case H.lookup (StrVal method) t of
+               Just (FuncVal params body clenv) ->
+                     apply (FuncVal params body clenv) (tableExp:args)
+               _ -> case H.lookup (StrVal "__metatable") t of
+                       Just (TableVal mt) ->
+                           case H.lookup (StrVal method) mt of
+                             Just (FuncVal params body clenv) ->
+                                 apply (FuncVal params body clenv) (tableExp:args)
+                             _ -> return $ StrVal ("method name not found: " ++ method)
+                       _ -> return $ StrVal ("meta table not found")
+       _ -> return $ StrVal "attempting to invoke on method from a value that's not a table"
+
 -- eval e = return $ StrVal ("unrecognized expression" ++ (show e))
 
 apply :: Val -> [Exp] -> EvalState Val
@@ -128,6 +145,16 @@ exec (FuncStmt fname params body) = do
   val <- (\argVal -> FuncVal argVal body env) <$> mapM getName params
   modify $ H.insert fname val
   return $ NilVal
+
+exec (MethodStmt tname (FuncStmt fname params body)) = do
+  env <- get
+  tableVal <- eval (VarExp tname)
+  case tableVal of
+    (TableVal t) -> do fval <- (\argVal -> FuncVal argVal body env) <$> mapM getName params
+                       let newTable = H.insert (StrVal fname) fval t
+                       modify $ H.insert tname (TableVal newTable)
+                       return $ NilVal
+    _ -> return $ StrVal ("table " ++ tname ++ " not found")
 
 exec (IfStmt exp s1 s2) = do
   cond <- eval exp

@@ -68,6 +68,7 @@ data Exp = NilExp
      | TableConstructor [(Exp,Exp)]  -- evaluate to a TableVal     
      | TableLookUpExp Exp Exp -- take a VarExp that evaluate to a TableVal and key expression
      | FuncCallExp Exp [Exp] -- take a function name and argument list
+     | MethodCallExp Exp String [Exp] -- take a table, method name and argument list
   deriving (Eq, Generic, Show)
 
 instance Hashable Exp
@@ -80,6 +81,7 @@ data Stmt = AssignStmt [Exp] [Exp] -- variable assignment, support multiple assi
           | SeqStmt [Stmt] -- a sequence of statements to be executed 
           | ReturnStmt Exp
           | FuncStmt String [Exp] Stmt
+          | MethodStmt String Stmt -- table name and a FuncStmt
           | IfStmt Exp Stmt Stmt -- else/elseif would be recursively stored in the second Stmt
           | SetMetaStmt String String
           | ForStmt String Exp Exp Exp Stmt -- var name, start, end, step and body
