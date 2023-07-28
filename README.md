@@ -64,18 +64,21 @@ print(tcircum(100))
 ## OOP Style with MetaTable
 
 ```lua
+Shape = {}
+function Shape:family() return "Shape" end
+function Shape:name() return "Shape" end
+function Shape:new() do o={};o["__metatable"]=self; return o end end
 
-Square = {}
+Square = Shape:new()
 function Square:area() return self.x * self.x end
-t = {}
-t["x"] = 10
-t["__metatable"] = Square
-print(t:area())
+function Square:name() return "Square" end
 
 function Square:new() do o={};o["__metatable"]=self; return o end end
 o = Square:new()
-o["x"] = 12
+o["x"] = 16
 print(o:area())
+print(o:name())
+print(o:family())
 ```
 
 ## TODO: Citations & Credits

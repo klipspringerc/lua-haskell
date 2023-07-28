@@ -71,17 +71,22 @@ eval (FuncCallExp func args) =
 
 eval (MethodCallExp tableExp method args) =
   do tableVal <- eval tableExp
+     fval <- locateMethod tableVal method
+     case fval of
+       (FuncVal params body clenv) -> apply (FuncVal params body clenv) (tableExp:args)
+       (StrVal s) -> return $ StrVal s
+       _ -> return $ StrVal ("method " ++ method ++ "not found")
+
+locateMethod :: Val -> String -> EvalState Val
+locateMethod tableVal method =
+  do env <- get
      case tableVal of
        TableVal t ->
            case H.lookup (StrVal method) t of
                Just (FuncVal params body clenv) ->
-                     apply (FuncVal params body clenv) (tableExp:args)
+                     return $ FuncVal params body clenv
                _ -> case H.lookup (StrVal "__metatable") t of
-                       Just (TableVal mt) ->
-                           case H.lookup (StrVal method) mt of
-                             Just (FuncVal params body clenv) ->
-                                 apply (FuncVal params body clenv) (tableExp:args)
-                             _ -> return $ StrVal ("method name not found: " ++ method)
+                       Just mt -> locateMethod mt method
                        _ -> return $ StrVal ("meta table not found")
        _ -> return $ StrVal "attempting to invoke on method from a value that's not a table"
 
