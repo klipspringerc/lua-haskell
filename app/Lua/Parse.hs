@@ -282,6 +282,14 @@ defaultStepExp = do spaces
 optForStep :: Parser Exp
 optForStep = try forStepExp <|> defaultStepExp
 
+whileStmt :: Parser Stmt
+whileStmt = do symbol "while"
+               exp <- expr
+               symbol "do"
+               body <- stmt
+               symbol "end"
+               return $ WhileStmt exp body
+
 setMetaStmt :: Parser Stmt
 setMetaStmt = do symbol "setmetatable"
                  symbol "("
@@ -302,6 +310,7 @@ stmt =  try quitStmt
     <|> try retStmt
     <|> try ifStmt
     <|> try forStmt
+    <|> try whileStmt
     <|> try breakStmt
     <|> try tableAssignStmt 
     <|> try assignStmt

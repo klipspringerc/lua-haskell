@@ -208,6 +208,8 @@ exec (ForStmt fvar start end step body) = do
                                             return val
     _ -> return $ StrVal "FOR control expression evaluates to none-numerical value"
 
+exec (WhileStmt cond body) = whileExec cond body ""
+
 exec s = return  $ StrVal ("invalid statement" ++ (show s))
 
 loopExec :: String -> Val -> Val -> Stmt -> String -> EvalState Val
@@ -239,3 +241,25 @@ loopStep var (IntVal step) =
        (IntVal cur) -> do modify $ H.insert var (IntVal (cur+step))
                           return $ IntVal (cur+step)
        _ -> return $ NilVal
+
+whileExec :: Exp -> Stmt -> String -> EvalState Val
+whileExec cond body outputs =
+  do
+    condVal <- whileCond cond
+    case condVal of
+      BoolVal True ->
+        do val <- exec body
+           case val of
+             (ControlVal "break") -> return $ StrVal outputs
+             (StrVal s) -> whileExec cond body (outputs ++ "\n" ++ s)
+             _ -> whileExec cond body outputs
+      BoolVal False -> return $ StrVal outputs
+      _ -> return condVal
+
+whileCond :: Exp -> EvalState Val
+whileCond cond =
+  do condVal <- eval cond
+     case condVal of
+       BoolVal t -> return $ BoolVal t
+       IntVal i | i /= 0 -> return  $ BoolVal True
+       _ -> return $ BoolVal False

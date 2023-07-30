@@ -85,6 +85,7 @@ data Stmt = AssignStmt [Exp] [Exp] -- variable assignment, support multiple assi
           | IfStmt Exp Stmt Stmt -- else/elseif would be recursively stored in the second Stmt
           | SetMetaStmt String String
           | ForStmt String Exp Exp Exp Stmt -- var name, start, end, step and body
+          | WhileStmt Exp Stmt -- condition expression and body
           | BreakStmt
           | NullStmt
           | QuitStmt

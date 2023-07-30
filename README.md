@@ -43,6 +43,12 @@ for i=1,10 do print(i) end
 for i=10,1,-3 do print(i) end
 
 do v=0; for i=1,10,1 do v = v+i end; print(v) end
+
+i = 3
+while i do do i=i-1; print(i) end end
+
+v = 1
+while v < 10 do v=v*2 end
 ```
 
 ## Functions
