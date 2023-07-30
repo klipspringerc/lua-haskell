@@ -127,7 +127,6 @@ logicalEqOps = [("unopnot", PrimUnop luaNot)
                , ("and", PrimBinop luaAnd)
                , ("or", PrimBinop luaOr)]
 
-
 runtime :: PrimFuncEnv
 -- map (String : PrimBinop/PrimUnop)
 runtime = H.fromList $ intOps ++ boolOps ++ strOps ++ logicalEqOps

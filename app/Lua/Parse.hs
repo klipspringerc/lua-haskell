@@ -291,6 +291,10 @@ setMetaStmt = do symbol "setmetatable"
                  symbol ")"
                  return $ SetMetaStmt tname mname
 
+expStmt :: Parser Stmt
+expStmt = do exp <- expr
+             return $ ReturnStmt exp
+
 stmt :: Parser Stmt
 stmt =  try quitStmt 
     <|> try seqStmt
@@ -302,7 +306,8 @@ stmt =  try quitStmt
     <|> try tableAssignStmt 
     <|> try assignStmt
     <|> try methodStmt
-    <|> funcStmt
+    <|> try funcStmt
+    <|> expStmt
 
 
 -- TODO: direct expression evaluation

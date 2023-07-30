@@ -21,46 +21,48 @@ evalPair (e1, e2) = do v1 <- eval e1
 -- ### The monadic evaluator
 eval :: Exp -> EvalState Val
 -- constant expressons 
-eval NilExp = return NilVal 
+eval NilExp = return NilVal
 eval (IntExp i) = return $ IntVal i
-eval (BoolExp b) = return $ BoolVal b 
-eval (StrExp s) = return $ StrVal s 
+eval (BoolExp b) = return $ BoolVal b
+eval (StrExp s) = return $ StrVal s
 
--- variable expression 
-eval (VarExp k) = do env <- get 
-                     case H.lookup k env of 
+-- variable expression
+eval (VarExp k) = do env <- get
+                     case H.lookup k env of
                         Just v  -> return v
                         Nothing -> return NilVal
 
--- binary operations 
+-- binary operations
 eval (BinopExp op e1 e2) = do v1 <- eval e1
-                              v2 <- eval e2   
-                              case H.lookup op runtime of 
-                                Just (PrimBinop f)  -> f v1 v2
-                                Just _              -> return $ StrVal "not a Binary operator" 
-                                Nothing             -> return $ StrVal "operator doesn't exist" 
-                    
--- unary operations 
+                              v2 <- eval e2
+                              case v1 of
+                                TableVal t -> evalTableOp op e1 e2
+                                _ ->
+                                  case H.lookup op runtime of
+                                    Just (PrimBinop f)  -> f v1 v2
+                                    Just _              -> return $ StrVal "not a Binary operator"
+                                    Nothing             -> return $ StrVal "operator doesn't exist"
+
+-- unary operations
 eval (UnopExp op e) = do v <- eval e
-                         case H.lookup op runtime of 
+                         case H.lookup op runtime of
                           Just (PrimUnop f)  -> f v
-                          Just _             -> return $ StrVal "not a Unary operator" 
-                          Nothing            -> return $ StrVal "operator doesn't exist" 
+                          Just _             -> return $ StrVal "not a Unary operator"
+                          Nothing            -> return $ StrVal "operator doesn't exist"
 
 
 -- table expressions  
 eval (TableConstructor fieldExpList) = do fieldValList <- mapM evalPair fieldExpList
                                           return $ TableVal $ H.fromList fieldValList
 
-eval (TableLookUpExp varExp keyExp) = 
-      do keyVal <- eval keyExp  
-         tableVal <- eval varExp 
-         case tableVal of 
-           TableVal t -> case H.lookup keyVal t of 
+eval (TableLookUpExp varExp keyExp) =
+      do keyVal <- eval keyExp
+         tableVal <- eval varExp
+         case tableVal of
+           TableVal t -> case H.lookup keyVal t of
                           Just v  -> return v
                           Nothing -> return NilVal
-           _          -> return $ StrVal "attempting to index a value that's not a table." 
-
+           _          -> return $ StrVal "attempting to index a value that's not a table."
 
 eval (FuncCallExp func args) =
   do funcVal <- eval func
@@ -89,6 +91,24 @@ locateMethod tableVal method =
                        Just mt -> locateMethod mt method
                        _ -> return $ StrVal ("meta table not found")
        _ -> return $ StrVal "attempting to invoke on method from a value that's not a table"
+
+evalTableOp :: String -> Exp -> Exp -> EvalState Val
+evalTableOp op e1 e2 = do tableVal <- eval e1
+                          case H.lookup op builtinOpMeta of
+                            Just method ->
+                                   do fval <- locateMethod tableVal method
+                                      case fval of
+                                        FuncVal params body clenv -> apply (FuncVal params body clenv) [e1,e2]
+                                        (StrVal s) -> return $ StrVal s
+                                        _ -> return $ StrVal ("operator metamethod " ++ op ++ " not found")
+                            _ -> return $ StrVal "unrecognized operator"
+
+opMetaMethods :: [(String, String)]
+opMetaMethods = [("+", "__add"), ("-", "__sub")]
+
+type MetaMethodEnv = H.HashMap String String
+builtinOpMeta :: MetaMethodEnv
+builtinOpMeta = H.fromList opMetaMethods
 
 -- eval e = return $ StrVal ("unrecognized expression" ++ (show e))
 
@@ -219,6 +239,3 @@ loopStep var (IntVal step) =
        (IntVal cur) -> do modify $ H.insert var (IntVal (cur+step))
                           return $ IntVal (cur+step)
        _ -> return $ NilVal
-
--- TODO: meta methods
-

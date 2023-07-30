@@ -6,11 +6,11 @@ cabal-version: 1.12
 --
 -- hash: da93f4ba0bcf79984b84222d0ea0da4a939581e9d5745bed0826c622fef5720b
 
-name:           lua-interpreter
+name:           lua-haskell-interpreter
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/lua-interpreter#readme>
-homepage:       https://github.com/githubuser/lua-interpreter#readme
-bug-reports:    https://github.com/githubuser/lua-interpreter/issues
+description:    Please see the README on GitHub at <https://github.com/klipspringerc/lua-haskell#readme>
+homepage:       https://github.com/klipspringerc/lua-haskell#readme
+bug-reports:    https://github.com/klipspringerc/lua-haskell/issues
 author:         Cui Shengping
 maintainer:     scui10@illinois.edu
 copyright:      2023 Cui Shengping
@@ -23,7 +23,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/lua-interpreter
+  location: https://github.com/klipspringerc/lua-haskell
 
 library
   other-modules:
