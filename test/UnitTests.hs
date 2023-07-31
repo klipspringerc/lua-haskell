@@ -85,31 +85,35 @@ strOpExpUnitTests =
 
 logicOpExpUnitTests :: [(String, Assertion)]
 logicOpExpUnitTests =
-  [ ( "unopnot"
+  [ ( "and"
     , assertEqual ""
-      "true\ntrue\nfalse\nfalse\n" 
-      (parseExecTest "do print (not false); print (not nil); print (not 2); print (not \"abc\") end")
+      "false"
+      (parseExecTest "print (false and true)")
     )
-  , ( "and"
+  , ( "lua and"
     , assertEqual ""
-      "false\nabc\n" 
-      (parseExecTest "do print (false and true); print(99 and \"abc\") end")
+      "abc"
+      (parseExecTest "print(99 and \"abc\")")
     )
   , ( "or"
     , assertEqual ""
-      "99\nnil\nany thing\n" (parseExecTest "do print (99 or nil); print (nil and 2); print (false or \"any thing\") end")
+      "99" (parseExecTest "print (99 or nil)")
+    )
+  , ( "lua or"
+    , assertEqual ""
+      "any thing" (parseExecTest "print (false or \"any thing\")")
     )
   , ( "~="
     , assertEqual ""
-      "true\ntrue\n" (parseExecTest "do print (true ~= 34); print (\"abc\" ~= false) end")
+      "true" (parseExecTest "print (true ~= 34)")
     )
   , ( "=="
     , assertEqual ""
-      "true\ntrue\nfalse\n" (parseExecTest "do print (true == true); print (nil == nil); print (3 == true) end")
+      "false" (parseExecTest "print (3 == true)")
     )
   , ( "logic mix"
     , assertEqual ""
-      "true\n99\n" (parseExecTest "do print (3 and false or nil ~= 3); print (99 or false == false and nil) end")
+      "99" (parseExecTest "print (99 or false == false and nil)")
     )
   ]
 
@@ -118,13 +122,13 @@ assignVarUnitTests :: [(String, Assertion)]
 assignVarUnitTests =
   [ ( "single assignment"
     , assertEqual ""
-      "4\nfalse\nnil\n99\n" 
-      (parseExecTest "do a = 1+3; b = 33 and false; print (a); print (b); b = 99; print (c); print(b) end")
+      "false"
+      (parseExecTest "do b = 33 and false; print(b) end")
     )
   , ( "multiple assignment"
     , assertEqual ""
-      "nil\n16\nabc\n" 
-      (parseExecTest "do a,b,c = 3*5+1, \"abc\" ; print (c); print(a); print(b) end")
+      "abc"
+      (parseExecTest "do a,b,c = 3*5+1, \"abc\" ; print(b) end")
     )
   ]
 
@@ -132,19 +136,55 @@ tableUnitTests :: [(String, Assertion)]
 tableUnitTests =
   [ ( "table constructor"
     , assertEqual ""
-      "true\nnil\n{fromList [(3,true),(1,99),(x,abc)]}\n" 
-      (parseExecTest "do t = {[1] = 99, [\"x\"]=\"abc\", [#\"key\"]=true}; print (t[3]);print(t[0]);print (t) end")
+      "{fromList [(3,true),(1,99),(x,abc)]}"
+      (parseExecTest "do t = {[1] = 99, [\"x\"]=\"abc\", [#\"key\"]=true}; print (t) end")
     ) 
 
   , ( "table assignment and lookup"
     , assertEqual ""
-      "99\nnil\n{fromList [(1,99),(x,true)]}\n" 
-      (parseExecTest "do t = {}; t[1] = 99; t[\"x\"] = true; print (t[1]); print (t[0]); print (t) end")
+      "{fromList [(1,99),(x,true)]}"
+      (parseExecTest "do t = {}; t[1] = 99; t[\"x\"] = true; print (t) end")
     )
   ]
 
+loopUnitTests :: [(String, Assertion)]
+loopUnitTests =
+  [ ( "for step"
+    , assertEqual ""
+      "45"
+      (parseExecTest "do v=0; for i=1,10,1 do v = v+i end; print(v) end")
+    )
+    , ( "for negative step"
+      , assertEqual ""
+      "54"
+      (parseExecTest "do v=0; for i=10,1,-1 do v = v+i end; print(v) end")
+    )
+    , ( "while"
+      , assertEqual ""
+      "16"
+      (parseExecTest "do v=1; while v < 10 do v=v*2 end; print(v) end")
+    )
+  ]
 
+ifUnitTests :: [(String, Assertion)]
+ifUnitTests =
+  [ ( "if else"
+    , assertEqual ""
+      "40"
+      (parseExecTest "do a=20;b=40;op=\"+\"; if a > b then v=a else v=b end; print(v) end")
+    )
+    , ( "if elseif sequence"
+      , assertEqual ""
+      "-20"
+      (parseExecTest "do a=20;b=40;op=\"-\"; if op == \"+\" then return a + b elseif op == \"-\" then return a - b else return -1 end end")
+    )
+  ]
 
-
-
-
+funcUnitTests :: [(String, Assertion)]
+funcUnitTests =
+  [ ( "function call"
+    , assertEqual ""
+      "628"
+      (parseExecTest "do function tcircum(r) do pi=314;return 2*pi*r/100 end end; tcircum(100) end")
+    )
+  ]

@@ -42,5 +42,13 @@ unitTests = testGroup "Unit Tests"
         $ buildTestCase assignVarUnitTests
   , testGroup "Table Manipulations"
         $ buildTestCase tableUnitTests
+  , testGroup "Control Structures"
+      [ testGroup "IF Statement"
+        $ buildTestCase ifUnitTests
+      , testGroup "Loop Statement"
+        $ buildTestCase loopUnitTests
+      ]
+  , testGroup "Functions"
+        $ buildTestCase funcUnitTests
   ]
  

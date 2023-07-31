@@ -9,13 +9,16 @@ import Lua.Parse
 import Lua.Runtime 
 
 import Text.ParserCombinators.Parsec hiding (Parser, State)
+import Control.Monad.Except
 
 -- parse a line of code and execute 
 parseExecTest :: String -> String 
 parseExecTest l = case parse stmt "test" l of                 
     Left err       -> show err 
-    Right s        -> let (result, _) = runState (exec s) H.empty
-                      in result 
+    Right s        -> case runExcept $ runStateT (exec s) H.empty of
+                        Left err -> show err
+                        Right (result, _) -> show result
+
 
 data CodeResultUnit = CodeResultUnit String String 
   deriving(Show, Eq) 

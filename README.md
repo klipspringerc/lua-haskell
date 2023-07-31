@@ -27,6 +27,8 @@ a[20] = "great"
 print(a[20])
 k = 20
 print(a[k])
+
+do t = {[1] = 99, ["x"]="abc", [#"key"]=true}; print (t) end
 ```
 
 ## Sequence and Control Structure

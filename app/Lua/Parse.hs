@@ -317,6 +317,3 @@ stmt =  try quitStmt
     <|> try methodStmt
     <|> try funcStmt
     <|> expStmt
-
-
--- TODO: direct expression evaluation
