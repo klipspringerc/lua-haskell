@@ -188,3 +188,12 @@ funcUnitTests =
       (parseExecTest "do function tcircum(r) do pi=314;return 2*pi*r/100 end end; tcircum(100) end")
     )
   ]
+
+metaUnitTests :: [(String, Assertion)]
+metaUnitTests =
+  [ ( "method definition"
+    , assertEqual ""
+      "{fromList [(__metatable,{fromList [(square,#<function:(self) ...>)]}),(y,4),(x,3)]}"
+      (parseExecTest "do Point = {};function Point:square() return self.x^2 + self.y^2 end;function Point:new(x,y) do o={};o[\"__metatable\"]=self;o[\"x\"]=x;o[\"y\"]=y;return o end end;a = Point:new(3,4);print(a) end")
+    )
+  ]

@@ -239,7 +239,7 @@ ifElseStmt = do symbol "else"
                 symbol "end"
                 return s
 
--- Handle `elseif` as recursive IfStmt
+-- handle `elseif` as recursive IfStmt
 ifContStmt :: Parser Stmt
 ifContStmt = do symbol "elseif"
                 exp <- expr
@@ -248,6 +248,7 @@ ifContStmt = do symbol "elseif"
                 s2 <- ifCont
                 return $ IfStmt exp s1 s2
 
+-- handle 3 possible scenarios in S2: elseif, else, and end
 ifCont :: Parser Stmt
 ifCont = try ifEndStmt
       <|> try ifContStmt
@@ -289,15 +290,6 @@ whileStmt = do symbol "while"
                body <- stmt
                symbol "end"
                return $ WhileStmt exp body
-
-setMetaStmt :: Parser Stmt
-setMetaStmt = do symbol "setmetatable"
-                 symbol "("
-                 tname <- var
-                 symbol ","
-                 mname <- var
-                 symbol ")"
-                 return $ SetMetaStmt tname mname
 
 expStmt :: Parser Stmt
 expStmt = do exp <- expr

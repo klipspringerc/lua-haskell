@@ -50,5 +50,7 @@ unitTests = testGroup "Unit Tests"
       ]
   , testGroup "Functions"
         $ buildTestCase funcUnitTests
+  , testGroup "Metatables"
+        $ buildTestCase metaUnitTests
   ]
  

@@ -1,22 +1,41 @@
 # lua-haskell-interpreter
 
-## Run interpretor
+A simple interactive lua interpreter implemented in Haskell
+
+*Supported Features*
+* Primitive types
+* Variables
+* Tables
+* Control Structures
+* Functions
+* Metatables & Metamethods
 
 *Limitations*
 * Input in interactive shell does not support proper cursor movement codes.
   It is recommended to directly copy complete statement into the shell.
 * Only single line statement input is supported. Use `do S;S1 end` to sequence multiple
   statements together.
-* Non-integer number literals / scientific notations are not supported.
+* Float number literals / scientific notations are not supported.
+* Combination of features could not work, e.g. non-tail `break` statement in sequenced statements inside loops.
+* Lua implicit table key deduction for array-like syntax is not implemented.
+
+## Run interpretor
 
 ```bash
-stack ghci
+stack build
+stack exec main
 ```
+
+Or in GHCi
 
 ```haskell
 > :load Main
 *Main> main
+```
+
+```lua
 Lua> print("Hello World")
+Lua> quit
 ```
 
 ## Basic operations
@@ -36,21 +55,17 @@ do t = {[1] = 99, ["x"]="abc", [#"key"]=true}; print (t) end
 ```lua
 do a=20;b=40;op="+" end
 
-if a > b then v=a else v=b end
+if a > b then print(a) else print(b) end
 
 if op == "+" then return a + b elseif op == "-" then return a - b else return -1 end
 
-for i=1,10 do print(i) end
-
 for i=10,1,-3 do print(i) end
 
-do v=0; for i=1,10,1 do v = v+i end; print(v) end
-
-i = 3
-while i do do i=i-1; print(i) end end
+do v=0; for i=1,10 do v = v+i end; print(v) end
 
 v = 1
-while v < 10 do v=v*2 end
+
+while v do do v=v*2; if v > 5 then break end end end
 ```
 
 ## Functions
@@ -69,7 +84,9 @@ function tcircum(r) do pi=314;return 2*pi*r/100 end end
 print(tcircum(100))
 ```
 
-## OOP Style with MetaTable
+## OOP Style
+
+`Square` inherits methods from `Shape` while overridding the `name` method
 
 ```lua
 Shape = {}
@@ -89,7 +106,7 @@ print(o:name())
 print(o:family())
 ```
 
-MetaMethod with operator `+`
+MetaMethod with operator `+` and `-`
 
 ```lua
 Point = {}

@@ -70,7 +70,10 @@ eval (FuncCallExp func args) =
        FuncVal params body clenv -> apply (FuncVal params body clenv) args
        _ -> return $ StrVal ("function name not found: " ++ (show func))
 
-
+{-
+method call would lookup function definition from table instead of global environment.
+the calling table is added to the argument list at invokation.
+-}
 eval (MethodCallExp tableExp method args) =
   do tableVal <- eval tableExp
      fval <- locateMethod tableVal method
@@ -79,6 +82,9 @@ eval (MethodCallExp tableExp method args) =
        (StrVal s) -> return $ StrVal s
        _ -> return $ StrVal ("method " ++ method ++ "not found")
 
+{-
+recursively lookup method definition by name through the metatable chain.
+-}
 locateMethod :: Val -> String -> EvalState Val
 locateMethod tableVal method =
   do env <- get
@@ -171,6 +177,10 @@ exec (FuncStmt fname params body) = do
   modify $ H.insert fname val
   return $ NilVal
 
+{-
+method definition is stored within the associated table.
+the additional `self` parameter has been added to the parameter list by the parser.
+-}
 exec (MethodStmt tname (FuncStmt fname params body)) = do
   env <- get
   tableVal <- eval (VarExp tname)
@@ -196,6 +206,10 @@ exec (IfStmt exp s1 s2) = do
 
 exec BreakStmt = return $ ControlVal "break"
 
+{-
+evaluate start, end, step expression only once at start of the loop.
+the control veriable is added to the environment before body execution and removed after.
+-}
 exec (ForStmt fvar start end step body) = do
   startVal <- eval start
   endVal <- eval end
@@ -212,6 +226,10 @@ exec (WhileStmt cond body) = whileExec cond body ""
 
 exec s = return  $ StrVal ("invalid statement" ++ (show s))
 
+{-
+perform the loop condition check and step increment before and after body execution.
+detect break signal and accumulate the output string along the way.
+-}
 loopExec :: String -> Val -> Val -> Stmt -> String -> EvalState Val
 loopExec var end step body outputs =
   do
